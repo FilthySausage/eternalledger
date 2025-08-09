@@ -1,5 +1,7 @@
 // Backend Code (index.js or app.js)
 
+// Backend Code (index.js or app.js)
+
 // @ts-nocheck
 import 'dotenv/config';
 import express from 'express';
@@ -58,6 +60,7 @@ async function initializeContract() {
   const wallet = new ethers.Wallet(privateKey, provider);
 
   // FULL ABI including isDeceased and getTokenByNric, records, etc.
+  // Added totalSupply and IdentityBound event for completeness
   // Added totalSupply and IdentityBound event for completeness
   const contractABI = [
     {
@@ -155,6 +158,26 @@ async function initializeContract() {
       ],
       "stateMutability": "view",
       "type": "function"
+    },
+    // Added for /stats endpoint
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    // Event for filtering
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": false, "internalType": "string", "name": "nric", "type": "string" },
+        { "indexed": false, "internalType": "address", "name": "wallet", "type": "address" }
+      ],
+      "name": "IdentityBound",
+      "type": "event"
     },
     // Added for /stats endpoint
     {
