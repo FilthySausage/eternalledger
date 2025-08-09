@@ -1,3 +1,5 @@
+// Backend Code (index.js or app.js)
+
 // @ts-nocheck
 import 'dotenv/config';
 import express from 'express';
@@ -56,6 +58,7 @@ async function initializeContract() {
   const wallet = new ethers.Wallet(privateKey, provider);
 
   // FULL ABI including isDeceased and getTokenByNric, records, etc.
+  // Added totalSupply and IdentityBound event for completeness
   const contractABI = [
     {
       "inputs": [
@@ -152,6 +155,26 @@ async function initializeContract() {
       ],
       "stateMutability": "view",
       "type": "function"
+    },
+    // Added for /stats endpoint
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    // Event for filtering
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": false, "internalType": "string", "name": "nric", "type": "string" },
+        { "indexed": false, "internalType": "address", "name": "wallet", "type": "address" }
+      ],
+      "name": "IdentityBound",
+      "type": "event"
     }
   ];
 
@@ -247,6 +270,23 @@ app.post('/record-death', async (req, res) => {
   }
 });
 
+app.get('/total-supply', async (req, res) => {
+  try {
+    // Initialize the contract. We only need the provider for a read-only call.
+    const { contract } = await initializeContract();
+    
+    // Call the totalSupply function on the contract.
+    // It's a view function, so it's a read call, not a transaction.
+    const totalSupply = await contract.totalSupply();
+    
+    // The returned value is a BigNumber, so we convert it to a string
+    // to avoid potential issues with JavaScript's number limits.
+    res.json({ totalSupply: totalSupply.toString() });
+  } catch (error) {
+    console.error('Error fetching total supply:', error);
+    res.status(500).json({ error: 'Failed to fetch total supply.' });
+  }
+});
 /** Search by NRIC endpoint */
 app.get('/search-by-nric/:nric', async (req, res) => {
   try {
